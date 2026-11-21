@@ -1,11 +1,13 @@
 import os
 from pathlib import Path
+import dj_database_url 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-secret-key-change-me-in-production")
-DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
-ALLOWED_HOSTS = ["*"] if DEBUG else os.environ.get("ALLOWED_HOSTS", "localhost").split(",")
+# Utilisation de noms de variables standards (SECRET_KEY et DEBUG)
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-change-me-in-production")
+DEBUG = os.environ.get("DEBUG", "True") == "True"
+ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
@@ -13,8 +15,10 @@ INSTALLED_APPS = [
     "core.apps.CoreConfig",
 ]
 
-# API JSON par jetons : pas de sessions ni de CSRF.
+# Ajout de WhiteNoise pour servir les fichiers statiques en production
 MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware", # <-- AJOUTÉ
     "core.middleware.CorsMiddleware",
     "core.middleware.MonitoringMiddleware",
 ]
@@ -24,18 +28,18 @@ WSGI_APPLICATION = "config.wsgi.application"
 AUTH_USER_MODEL = "core.User"
 AUTH_PASSWORD_VALIDATORS = []
 
-if os.environ.get("DB_ENGINE") == "postgres":  # structure compatible PostgreSQL
+# Configuration intelligente de la base de données
+if os.environ.get("DATABASE_URL"):
+    # Utilisé sur Render (lit l'URL de la base PostgreSQL)
     DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.environ.get("DB_NAME", "ordures"),
-            "USER": os.environ.get("DB_USER", "postgres"),
-            "PASSWORD": os.environ.get("DB_PASSWORD", ""),
-            "HOST": os.environ.get("DB_HOST", "localhost"),
-            "PORT": os.environ.get("DB_PORT", "5432"),
-        }
+        "default": dj_database_url.config(
+            default=os.environ.get("DATABASE_URL"),
+            conn_max_age=600,
+            ssl_require=True
+        )
     }
 else:
+    # Utilisé en local (SQLite)
     DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / "db.sqlite3"}}
 
 LANGUAGE_CODE = "fr-fr"
@@ -60,3 +64,8 @@ OTP_VALIDITE_MINUTES = 10
 JWT_ACCESS_SECONDS = 60 * 60
 JWT_REFRESH_SECONDS = 60 * 60 * 24 * 7
 CAPACITE_EBOUEUR_KG = 2000
+
+# Configuration des fichiers statiques pour WhiteNoise
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
