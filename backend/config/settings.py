@@ -10,6 +10,7 @@ DEBUG = os.environ.get("DEBUG", "True") == "True"
 ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
+    "django.contrib.staticfiles",
     "django.contrib.contenttypes",
     "django.contrib.auth",
     "core.apps.CoreConfig",
