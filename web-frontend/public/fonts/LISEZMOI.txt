@@ -1,0 +1,3 @@
+Copiez ici les polices du design system :
+  Pally-Regular.otf, Pally-Medium.otf, Pally-Bold.otf
+(Nunito est chargée depuis Google Fonts dans index.html.)

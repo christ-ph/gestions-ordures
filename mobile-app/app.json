@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "Gestion Ordures",
+    "slug": "gestion-ordures",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Scanner le QR Code du bac et photographier les dépôts sauvages.",
+        "NSLocationWhenInUseUsageDescription": "Valider les collectes et signaler les dépôts par GPS."
+      }
+    },
+    "android": {
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "plugins": [
+      "expo-camera",
+      "expo-location",
+      "expo-image-picker",
+      "expo-asset",
+      "expo-font"
+    ]
+  }
+}

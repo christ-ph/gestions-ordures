@@ -1,0 +1,24 @@
+# --- Backend (Python/Django) ---
+backend/venv/
+backend/.venv/
+backend/__pycache__/
+backend/*.pyc
+backend/db.sqlite3
+backend/staticfiles/
+.env
+*.env
+
+# --- Frontend Web (React/Vite) ---
+web-frontend/node_modules/
+web-frontend/dist/
+web-frontend/.env
+
+# --- Application Mobile (Expo) ---
+mobile-app/node_modules/
+mobile-app/.expo/
+mobile-app/dist/
+mobile-app/web-build/
+mobile-app/.env
+
+# --- Système ---
+.DS_Store

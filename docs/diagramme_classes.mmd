@@ -1,0 +1,174 @@
+classDiagram
+direction TB
+
+class User {
+  +UUID id
+  +String nom
+  +String email
+  +String telephone
+  +String password_hash
+  +Role role
+  +String otp_code
+  +DateTime otp_expiration
+  +Boolean is_verified
+  +Boolean is_active
+  +generer_otp() String
+  +verifier_otp(code String) Boolean
+}
+class ProfilAdmin {
+  +String matricule
+}
+class ProfilClient {
+  +String adresse
+  +String qr_code_unique
+  +Boolean est_nouveau
+}
+class ProfilEboueur {
+  +String zone_affectee
+  +Boolean disponible
+}
+class Service {
+  +UUID id
+  +TypeService type
+  +Decimal poids_max_kg
+  +Taille taille_max
+  +Decimal tarif_mensuel
+  +calculer_tarif(poids, taille) Decimal
+  +obtenir_priorite() Int
+}
+class Souscription {
+  +UUID id
+  +Date date_debut
+  +Date date_fin
+  +JSON jours_choisis
+  +Int mois_gratuits_restants = 2
+  +Boolean renouvellement_auto
+  +StatutSouscription statut
+  +verifier_eligibilite_gratuit() Boolean
+  +calculer_montant_total() Decimal
+  +activer_souscription() void
+}
+class PointCollecte {
+  +UUID id
+  +Float latitude
+  +Float longitude
+  +String adresse
+  +String zone
+  +Decimal poids_estime
+  +Taille taille
+  +Decimal capacite_max
+  +calculer_distance_vers(autre PointCollecte) Float
+}
+class PlanningCollecte {
+  +UUID id
+  +Date date_tournee
+  +Int ordre_passage
+  +StatutCollecte statut
+  +DateTime heure_arrivee
+  +String preuve_qr_code
+  +Boolean est_synchronise
+  +notifier_client_arrivee() void
+  +marquer_effectuee(qr, gps) void
+}
+class Paiement {
+  +UUID id
+  +Decimal montant
+  +ModePaiement mode
+  +String reference_api
+  +StatutPaiement statut
+  +DateTime date_paiement
+}
+class Notification {
+  +UUID id
+  +String titre
+  +String message
+  +TypeNotification type
+  +Boolean est_lue
+  +DateTime date_envoi
+}
+class SignalementCitoyen {
+  +UUID id
+  +String photo_url
+  +Float latitude
+  +Float longitude
+  +String description
+  +StatutSignalement statut
+}
+class LogMonitoring {
+  +UUID id
+  +String action
+  +String endpoint
+  +Int statut_http
+  +DateTime timestamp
+}
+class NotificationService {
+  <<service>>
+  +envoyer_email_otp(user, code) void
+  +creer_notif_interne(user, titre, msg, type) Notification
+  +notifier_abonnement(souscription) void
+  +notifier_arrivee(planning) void
+  +notifier_collecte_validee(planning) void
+}
+class PlanificateurCollecte {
+  <<service>>
+  +ordonnancer(collectes) List
+  +generer_planning(date) List~PlanningCollecte~
+}
+class GrapheCollecte {
+  <<service>>
+  +matrice_distances(points) Matrix
+  +plus_proche_voisin(depart, points) List
+  +optimiser_2opt(tournee) List
+  +inserer_incremental(tournee, point_express) List
+}
+class AuthService {
+  <<service>>
+  +inscrire(donnees) User
+  +se_connecter(email, pwd) TokenJWT
+  +generer_jwt(user) TokenJWT
+  +verifier_role(token, roles) Boolean
+}
+class Role { <<enumeration>> ADMIN CLIENT EBOUEUR }
+class TypeService { <<enumeration>> STANDARD EXPRESS VIP }
+class Taille { <<enumeration>> PETIT MOYEN GRAND }
+class StatutSouscription { <<enumeration>> EN_ATTENTE ACTIVE EXPIREE ANNULEE }
+class StatutCollecte { <<enumeration>> PLANIFIE SUR_PLACE EFFECTUE ECHEC }
+class ModePaiement { <<enumeration>> MOBILE_MONEY CARTE }
+class StatutPaiement { <<enumeration>> EN_ATTENTE REUSSI ECHEC }
+class TypeNotification { <<enumeration>> OTP ABONNEMENT ARRIVEE_EBOUEUR COLLECTE_VALIDEE RAPPEL SYSTEME }
+class StatutSignalement { <<enumeration>> OUVERT CONVERTI_EXPRESS TRAITE }
+
+User "1" *-- "0..1" ProfilAdmin : profil
+User "1" *-- "0..1" ProfilClient : profil
+User "1" *-- "0..1" ProfilEboueur : profil
+ProfilClient "1" --> "0..*" Souscription : souscrit
+ProfilClient "1" --> "1..*" PointCollecte : possède
+ProfilClient "1" --> "0..*" SignalementCitoyen : signale
+Service "1" <-- "0..*" Souscription : concerne
+Souscription "1" --> "0..*" Paiement : réglée par
+Souscription "1" --> "0..*" PlanningCollecte : génère
+ProfilEboueur "1" --> "0..*" PlanningCollecte : exécute
+PointCollecte "1" <-- "0..*" PlanningCollecte : visite
+SignalementCitoyen "0..1" --> "0..1" PlanningCollecte : converti en Express
+User "1" --> "0..*" Notification : reçoit
+User "0..1" --> "0..*" LogMonitoring : génère
+
+User ..> Role
+Service ..> TypeService
+PointCollecte ..> Taille
+Souscription ..> StatutSouscription
+PlanningCollecte ..> StatutCollecte
+Paiement ..> ModePaiement
+Paiement ..> StatutPaiement
+Notification ..> TypeNotification
+SignalementCitoyen ..> StatutSignalement
+
+PlanificateurCollecte ..> PlanningCollecte : crée
+PlanificateurCollecte ..> GrapheCollecte : utilise
+GrapheCollecte ..> PointCollecte : distances Haversine
+AuthService ..> User : gère
+AuthService ..> LogMonitoring : journalise
+NotificationService ..> Notification : crée
+Souscription ..> NotificationService : signal post_save
+PlanningCollecte ..> NotificationService : signal post_save
+User ..> NotificationService : signal post_save

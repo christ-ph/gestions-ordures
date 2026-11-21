@@ -1,0 +1,184 @@
+@startuml diagramme_classes
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty members
+
+class User {
+  - id : UUID
+  - nom : String
+  - email : String
+  - telephone : String
+  - password_hash : String
+  - role : Role
+  - otp_code : String
+  - otp_expiration : DateTime
+  - is_verified : Boolean
+  - is_active : Boolean
+  + generer_otp() : String
+  + verifier_otp(code : String) : Boolean
+}
+class ProfilAdmin { - matricule : String }
+class ProfilClient {
+  - adresse : String
+  - qr_code_unique : String
+  - est_nouveau : Boolean
+}
+class ProfilEboueur {
+  - zone_affectee : String
+  - disponible : Boolean
+}
+class Service {
+  - id : UUID
+  - type : TypeService
+  - poids_max_kg : Decimal
+  - taille_max : Taille
+  - tarif_mensuel : Decimal
+  + calculer_tarif(poids, taille) : Decimal
+  + obtenir_priorite() : Int
+}
+class Souscription {
+  - id : UUID
+  - date_debut : Date
+  - date_fin : Date
+  - jours_choisis : JSON
+  - mois_gratuits_restants : Int = 2
+  - renouvellement_auto : Boolean
+  - statut : StatutSouscription
+  + verifier_eligibilite_gratuit() : Boolean
+  + calculer_montant_total() : Decimal
+  + activer_souscription() : void
+}
+class PointCollecte {
+  - id : UUID
+  - latitude : Float
+  - longitude : Float
+  - adresse : String
+  - zone : String
+  - poids_estime : Decimal
+  - taille : Taille
+  - capacite_max : Decimal
+  + calculer_distance_vers(autre : PointCollecte) : Float
+}
+class PlanningCollecte {
+  - id : UUID
+  - date_tournee : Date
+  - ordre_passage : Int
+  - statut : StatutCollecte
+  - heure_arrivee : DateTime
+  - preuve_qr_code : String
+  - est_synchronise : Boolean
+  + notifier_client_arrivee() : void
+  + marquer_effectuee(qr, gps) : void
+}
+class Paiement {
+  - id : UUID
+  - montant : Decimal
+  - mode : ModePaiement
+  - reference_api : String
+  - statut : StatutPaiement
+  - date_paiement : DateTime
+}
+class Notification {
+  - id : UUID
+  - titre : String
+  - message : String
+  - type : TypeNotification
+  - est_lue : Boolean
+  - date_envoi : DateTime
+}
+class SignalementCitoyen {
+  - id : UUID
+  - photo_url : String
+  - latitude : Float
+  - longitude : Float
+  - description : String
+  - statut : StatutSignalement
+}
+class LogMonitoring {
+  - id : UUID
+  - action : String
+  - endpoint : String
+  - statut_http : Int
+  - timestamp : DateTime
+}
+class NotificationService <<service>> {
+  + envoyer_email_otp(user, code)
+  + creer_notif_interne(user, titre, msg, type)
+  + notifier_abonnement(souscription)
+  + notifier_arrivee(planning)
+  + notifier_collecte_validee(planning)
+}
+class PlanificateurCollecte <<service>> {
+  + ordonnancer(collectes)
+  + generer_planning(date)
+}
+class GrapheCollecte <<service>> {
+  + matrice_distances(points)
+  + plus_proche_voisin(depart, points)
+  + optimiser_2opt(tournee)
+  + inserer_incremental(tournee, point_express)
+}
+class AuthService <<service>> {
+  + inscrire(donnees)
+  + se_connecter(email, pwd)
+  + generer_jwt(user)
+  + verifier_role(token, roles)
+}
+
+enum Role { ADMIN
+CLIENT
+EBOUEUR }
+enum TypeService { STANDARD
+EXPRESS
+VIP }
+enum Taille { PETIT
+MOYEN
+GRAND }
+enum StatutSouscription { EN_ATTENTE
+ACTIVE
+EXPIREE
+ANNULEE }
+enum StatutCollecte { PLANIFIE
+SUR_PLACE
+EFFECTUE
+ECHEC }
+enum ModePaiement { MOBILE_MONEY
+CARTE }
+enum StatutPaiement { EN_ATTENTE
+REUSSI
+ECHEC }
+enum TypeNotification { OTP
+ABONNEMENT
+ARRIVEE_EBOUEUR
+COLLECTE_VALIDEE
+RAPPEL
+SYSTEME }
+enum StatutSignalement { OUVERT
+CONVERTI_EXPRESS
+TRAITE }
+
+User "1" *-- "0..1" ProfilAdmin : profil
+User "1" *-- "0..1" ProfilClient : profil
+User "1" *-- "0..1" ProfilEboueur : profil
+ProfilClient "1" --> "0..*" Souscription : souscrit
+ProfilClient "1" --> "1..*" PointCollecte : possède
+ProfilClient "1" --> "0..*" SignalementCitoyen : signale
+Service "1" <-- "0..*" Souscription : concerne
+Souscription "1" --> "0..*" Paiement : réglée par
+Souscription "1" --> "0..*" PlanningCollecte : génère
+ProfilEboueur "1" --> "0..*" PlanningCollecte : exécute
+PointCollecte "1" <-- "0..*" PlanningCollecte : visite
+SignalementCitoyen "0..1" --> "0..1" PlanningCollecte : converti en Express
+User "1" --> "0..*" Notification : reçoit
+User "0..1" --> "0..*" LogMonitoring : génère
+
+PlanificateurCollecte ..> PlanningCollecte : crée
+PlanificateurCollecte ..> GrapheCollecte : utilise
+GrapheCollecte ..> PointCollecte : Haversine
+AuthService ..> User : gère
+AuthService ..> LogMonitoring : journalise
+NotificationService ..> Notification : crée
+Souscription ..> NotificationService : post_save
+PlanningCollecte ..> NotificationService : post_save
+User ..> NotificationService : post_save
+@enduml
