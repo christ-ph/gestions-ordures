@@ -14,12 +14,13 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.auth",
     "core.apps.CoreConfig",
+    "gmailapi_backend", # <-- Ajouté
 ]
 
 # Ajout de WhiteNoise pour servir les fichiers statiques en production
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware", # <-- AJOUTÉ
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "core.middleware.CorsMiddleware",
     "core.middleware.MonitoringMiddleware",
 ]
@@ -50,15 +51,18 @@ USE_TZ = True
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 DATA_UPLOAD_MAX_MEMORY_SIZE = 15 * 1024 * 1024  # photos de signalement en base64
 
-if os.environ.get("EMAIL_HOST"):
-    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-    EMAIL_HOST = os.environ["EMAIL_HOST"]
-    EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
-    EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
-    EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
-    EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "1") == "1"
-else:
-    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# ==========================================
+# CONFIGURATION DE L'ENVOI D'EMAILS (API GMAIL)
+# ==========================================
+# Au lieu du SMTP (bloqué par Render), on utilise l'API Google (port 443)
+EMAIL_BACKEND = "gmailapi_backend.mail.GmailBackend"
+
+# Récupération des identifiants OAuth2 depuis les variables d'environnement
+GMAIL_API_CLIENT_ID = os.environ.get("GMAIL_API_CLIENT_ID", "")
+GMAIL_API_CLIENT_SECRET = os.environ.get("GMAIL_API_CLIENT_SECRET", "")
+GMAIL_API_REFRESH_TOKEN = os.environ.get("GMAIL_API_REFRESH_TOKEN", "")
+
+# L'adresse d'envoi DOIT être exactement l'adresse Gmail qui a généré les tokens OAuth2
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "no-reply@gestion-ordures.cm")
 
 OTP_VALIDITE_MINUTES = 10
@@ -70,6 +74,3 @@ CAPACITE_EBOUEUR_KG = 2000
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-# Timeout pour éviter que Render ne plante
-EMAIL_TIMEOUT = 10

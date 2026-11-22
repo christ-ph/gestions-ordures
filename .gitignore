@@ -22,3 +22,6 @@ mobile-app/.env
 
 # --- Système ---
 .DS_Store
+
+credentials.json
+get_token.py
