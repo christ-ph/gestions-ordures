@@ -14,10 +14,15 @@
     },
     "android": {
       "permissions": [
-        "CAMERA",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
-      ]
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "package": "com.christph.gestionordures"
     },
     "plugins": [
       "expo-camera",
@@ -25,6 +30,11 @@
       "expo-image-picker",
       "expo-asset",
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "531c314c-0e8c-495a-8f53-8a34ce32eded"
+      }
+    }
   }
 }

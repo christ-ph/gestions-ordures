@@ -70,3 +70,6 @@ CAPACITE_EBOUEUR_KG = 2000
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Timeout pour éviter que Render ne plante
+EMAIL_TIMEOUT = 10

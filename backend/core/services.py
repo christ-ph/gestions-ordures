@@ -26,7 +26,7 @@ class NotificationService:
     @staticmethod
     def _email(user, sujet, corps):
         try:
-            send_mail(sujet, corps, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)
+            send_mail(sujet, corps, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=True)
         except Exception as exc:  # SMTP indisponible : on n'interrompt pas le flux métier
             print(f"[EMAIL] échec d'envoi à {user.email} : {exc}")
 
